@@ -1,1 +1,1 @@
-My first game created with python & pygame
+My first game created with python & pygame a top down racing game 

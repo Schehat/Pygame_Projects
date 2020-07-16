@@ -155,13 +155,14 @@ class Messages:
             if x_ob < self.x_car < x_ob + BARREL_WIDTH or x_ob < self.x_car + CAR_WIDTH < x_ob + BARREL_WIDTH:
                 crash("YOU CRASHED")
 
-    def score(self, points):
+    @staticmethod
+    def score(points):
         font = pygame.font.SysFont(None, 25)
         text = font.render("Score: " + str(points), True, BLACK)
         game_display.blit(text, (0, 0))
 
 
-class IntroButton:
+class ButtonIntro:
     def __init__(self, mouse, click):
         self.mouse = mouse
         self.click = click
@@ -184,7 +185,8 @@ class IntroButton:
         else:
             pygame.draw.rect(game_display, GREEN, RECT_GREEN)
 
-    def button_text(self, rect, text):
+    @staticmethod
+    def button_text(rect, text):
         font = pygame.font.Font('freesansbold.ttf', 20)
         text_output = font.render(text, True, BLACK)
         text_rect = text_output.get_rect()
@@ -192,7 +194,7 @@ class IntroButton:
         game_display.blit(text_output, text_rect)
 
 
-class PausedButton:
+class ButtonPause:
     def __init__(self, mouse, click):
         self.mouse = mouse
         self.click = click
@@ -216,7 +218,8 @@ class PausedButton:
         else:
             pygame.draw.rect(game_display, GREEN, RECT_GREEN)
 
-    def button_text(self, rect, text):
+    @staticmethod
+    def button_text(rect, text):
         font = pygame.font.Font('freesansbold.ttf', 20)
         text_output = font.render(text, True, BLACK)
         text_rect = text_output.get_rect()
@@ -246,7 +249,8 @@ class ButtonInfo:
         text_rect.center = (self.rect[0] + int((self.rect[2] / 2)), self.rect[1] + int((self.rect[3] / 2)))
         game_display.blit(text_output, text_rect)
 
-    def info_text(self):
+    @staticmethod
+    def info_text():
         font = pygame.font.Font('freesansbold.ttf', 20)
         text_output_arrows = font.render("Use The Arrows To Move Back and Forth or Sideway", True, BLACK, WHITE)
         text_rect_arrows = text_output_arrows.get_rect()
@@ -280,9 +284,8 @@ def game_intro():
 
         mouse = pygame.mouse.get_pos()
         click = pygame.mouse.get_pressed()
-        button = IntroButton(mouse, click)
+        button = ButtonIntro(mouse, click)
         button.button_draw()
-        global button_info
         button_info = ButtonInfo(mouse, click, RECT_INFO, "Information")
         button_info.button_draw()
         button.button_text(RECT_GREEN, "GO")
@@ -303,7 +306,7 @@ def game_info():
     text_rect.center = (int(DISPLAY_WIDTH / 2), 100)
     game_display.blit(text_output, text_rect)
 
-    button_info.info_text()
+    ButtonInfo.info_text()
 
     while intro:
         for event in pygame.event.get():
@@ -313,7 +316,7 @@ def game_info():
 
         mouse = pygame.mouse.get_pos()
         click = pygame.mouse.get_pressed()
-        button = IntroButton(mouse, click)
+        button = ButtonIntro(mouse, click)
         button.button_draw()
         button.button_text(RECT_GREEN, "GO")
         button.button_text(RECT_RED, "CHICK OUT")
@@ -412,7 +415,7 @@ def game_pause():
 
         mouse = pygame.mouse.get_pos()
         click = pygame.mouse.get_pressed()
-        button = PausedButton(mouse, click)
+        button = ButtonPause(mouse, click)
         button.button_draw()
         button.button_text(RECT_GREEN, "Continue")
         button.button_text(RECT_RED, "CHICK OUT")
@@ -441,7 +444,7 @@ def crash(text):
 
         mouse = pygame.mouse.get_pos()
         click = pygame.mouse.get_pressed()
-        button = IntroButton(mouse, click)
+        button = ButtonIntro(mouse, click)
         button.button_draw()
         button.button_text(RECT_GREEN, "PLAY AGAIN!")
         button.button_text(RECT_RED, "CHICK OUT")

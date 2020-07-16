@@ -2,11 +2,18 @@ import pygame
 import os
 import math
 import random
+
 os.environ['SDL_VIDEO_CENTERED'] = '1'
 pygame.init()
+pygame.font.init()
+
+# define fonts
+font_label = pygame.font.SysFont("comicsans", 50)
+font_screen = pygame.font.Font("freesansbold.ttf", 80)
+font_button = pygame.font.Font("freesansbold.ttf", 20)
 
 # declaration of of constant variables
-WINDOWS_SIZE = (800, 600)
+WINDOW_SIZE = (800, 600)
 FPS = 60
 RED = (255, 0, 0)
 BLACK = (0, 0, 0)
@@ -31,7 +38,7 @@ BOTTOM_2 =  [[130, 305], [PLAYER_START_Y, 400]]
 BOTTOM_3 = [[450, 800], [PLAYER_START_Y, 400]]
 PLATFORM_1 = [[0, 222], [386, 0]]
 
-window = pygame.display.set_mode(WINDOWS_SIZE)
+window = pygame.display.set_mode(WINDOW_SIZE)
 pygame.display.set_caption("Platformer")
 clock = pygame.time.Clock()
 
@@ -63,6 +70,7 @@ music = pygame.mixer.music.load("dark_souls_-_E.S. Gwyn_by_RoeTaka.mp3")
 bullets = []
 paused = True
 enemies = 1
+enemy = list()
 
 
 class Player:
@@ -227,7 +235,7 @@ class Player:
                 self.x += self.v
         if self.x < 0 and self.y < Left_BORDER_1[1]:
             self.check_border_left = False
-        if self.x + self.w >= WINDOWS_SIZE[0]:
+        if self.x + self.w >= WINDOW_SIZE[0]:
             self.check_border_right = False
         if BOTTOM_1[0][0] < self.x < BOTTOM_1[0][1] - self.w and not self.is_jumped:
             if self.y < BOTTOM_1[1][1]:
@@ -256,21 +264,17 @@ class Player:
         self.hits += 1
 
     def score(self):
-        font = pygame.font.Font('freesansbold.ttf', 20)
-        text_output = font.render("Score: " + str(self.hits), True, BLACK)
-        text_rect = text_output.get_rect()
-        text_rect.center = (60, 30)
-        window.blit(text_output, text_rect)
+        text_score = font_label.render("Score: " + str(self.hits), True, BLACK)
+        window.blit(text_score, (10, 10))
 
 
     def check(self):
-        global enemy
         for j in enemy:
             if self.y + PLAYER_HEIGHT > j.y and self.y < j.y + j.h:
                 if self.x < j.x + j.w and self.x + PLAYER_WIDTH > j.x:
                     font = pygame.font.SysFont("comicsans", 100)
-                    text_output = font.render("-10", 1, RED)
-                    window.blit(text_output, (int(WINDOWS_SIZE[0] / 2 - (text_output.get_width() / 2)), 200))
+                    text_score = font.render("-10", 1, RED)
+                    window.blit(text_score, (int(WINDOW_SIZE[0] / 2 - (text_score.get_width() / 2)), 200))
                     pygame.display.update()
                     pygame.time.delay(500)
                     # to exit the game
@@ -296,9 +300,10 @@ class Projectiles:
     def draw(self):
         pygame.draw.circle(window, (0, 0, 255), (self.x, self.y), self.radius)
 
-    def move(self, i):
+    @staticmethod
+    def move(i):
         global bullets
-        if 0 < i.x < WINDOWS_SIZE[0]:
+        if 0 < i.x < WINDOW_SIZE[0]:
             i.x += i.v
         else:
             bullets.pop(bullets.index(i))
@@ -315,7 +320,8 @@ class Projectiles:
                 bullets.append(Projectiles(round(player.x + player.w // 2), round(player.y + player.h // 2),
                                              6, (0, 0, 255), -1))
 
-    def check(self, i, j):
+    @staticmethod
+    def check(i, j):
         # check collision with enemy
         if i.y + i.radius > j.y and i.y - i.radius < j.y + j.h:
             if i.x - i.radius > j.x and i.x + i.radius < j.x + j.w:
@@ -358,7 +364,7 @@ class Enemy:
         self.health = 100
         self.dead = False # helpful to not waste ram in case of multiple enemies - not implanted atm
 
-    def draw(self, i):
+    def draw(self):
         if not self.dead:
             if self.walk_count >= 4 and self.counter < self.walk_limit:
                 self.walk_count = 0
@@ -407,7 +413,7 @@ class Enemy:
                 pygame.draw.rect(window, RED, (self.x + 10, self.y - 15, 50, 5))
                 pygame.draw.rect(window, GREEN, (self.x + 10, self.y - 15, 50 - int((0.5 * (100 - self.health))), 5))
 
-    def move(self, i):
+    def move(self):
         if self.v > 0:
             if self.x + self.v < self.path[1]:
                 self.x += self.v
@@ -431,8 +437,8 @@ class Enemy:
                 self.y = BOTTOM_1[1][1] - self.h
 
     def health_bar(self, i):
-        global enemy
         global enemies
+        global enemy
         # 10 and not 0 otherwise needs 11 hits
         if self.health > 10:
                 self.health -= 10
@@ -458,7 +464,7 @@ class Enemy:
                         enemy.append(Enemy(enemy_x, PLAYER_START_Y - PLAYER_HEIGHT, PLAYER_WIDTH, PLAYER_HEIGHT, enemy_v, 100, 700))
 
 
-class PausedButton:
+class ButtonPause:
     def __init__(self, mouse, click):
         self.mouse = mouse
         self.click = click
@@ -482,15 +488,15 @@ class PausedButton:
         else:
             pygame.draw.rect(window, GREEN, RECT_GREEN)
 
-    def button_text(self, rect, text):
-        font = pygame.font.Font('freesansbold.ttf', 20)
-        text_output = font.render(text, True, BLACK)
+    @staticmethod
+    def button_text(rect, text):
+        text_output = font_button.render(text, True, BLACK)
         text_rect = text_output.get_rect()
         text_rect.center = (rect[0] + int((rect[2] / 2)), rect[1] + int((rect[3] / 2)))
         window.blit(text_output, text_rect)
 
 
-class IntroButton:
+class ButtonIntro:
     def __init__(self, mouse, click):
         self.mouse = mouse
         self.click = click
@@ -513,9 +519,9 @@ class IntroButton:
         else:
             pygame.draw.rect(window, GREEN, RECT_GREEN)
 
-    def button_text(self, rect, text):
-        font = pygame.font.Font('freesansbold.ttf', 20)
-        text_output = font.render(text, True, BLACK)
+    @staticmethod
+    def button_text(rect, text):
+        text_output = font_button.render(text, True, BLACK)
         text_rect = text_output.get_rect()
         text_rect.center = (rect[0] + int((rect[2] / 2)), rect[1] + int((rect[3] / 2)))
         window.blit(text_output, text_rect)
@@ -537,39 +543,37 @@ class ButtonInfo:
         else:
             pygame.draw.rect(window, BLUE, RECT_INFO)
 
-        font = pygame.font.Font('freesansbold.ttf', 20)
-        text_output = font.render(self.text, True, BLACK)
+        text_output = font_button.render(self.text, True, BLACK)
         text_rect = text_output.get_rect()
         text_rect.center = (self.rect[0] + int((self.rect[2] / 2)), self.rect[1] + int((self.rect[3] / 2)))
         window.blit(text_output, text_rect)
 
-    def info_text(self):
-        font = pygame.font.Font('freesansbold.ttf', 20)
-        text_output_arrows = font.render("Try not to get hit from the skeleton", True, BLACK, WHITE)
+    @staticmethod
+    def info_text():
+        text_output_arrows = font_button.render("Try not to get hit from the skeleton", True, BLACK, WHITE)
         text_rect_arrows = text_output_arrows.get_rect()
-        text_rect_arrows.center = (int(WINDOWS_SIZE[0] / 2), 200)
+        text_rect_arrows.center = (int(WINDOW_SIZE[0] / 2), 200)
         window.blit(text_output_arrows, text_rect_arrows)
-        text_output_spacebar = font.render("Use your canon (S) to shoot the enemy down", True, BLACK, WHITE)
+        text_output_spacebar = font_button.render("Use your canon (S) to shoot the enemy down", True, BLACK, WHITE)
         text_rect_spacebar = text_output_spacebar.get_rect()
-        text_rect_spacebar.center = (int(WINDOWS_SIZE[0] / 2), 220)
+        text_rect_spacebar.center = (int(WINDOW_SIZE[0] / 2), 220)
         window.blit(text_output_spacebar, text_rect_spacebar)
-        text_output_obstacle = font.render("Your goal is to shoot the enemy as much down as you can", True, BLACK, WHITE)
+        text_output_obstacle = font_button.render("Your goal is to shoot the enemy as much down as you can", True, BLACK, WHITE)
         text_rect_obstacle = text_output_obstacle.get_rect()
-        text_rect_obstacle.center = (int(WINDOWS_SIZE[0] / 2), 240)
+        text_rect_obstacle.center = (int(WINDOW_SIZE[0] / 2), 240)
         window.blit(text_output_obstacle, text_rect_obstacle)
-        text_output_control = font.render("Controls: Move with A, D & W and pause the game with the spacebar", True, BLACK, WHITE)
+        text_output_control = font_button.render("Controls: Move with A, D & W and pause the game with the spacebar", True, BLACK, WHITE)
         text_rect_control = text_output_control.get_rect()
-        text_rect_control.center = (int(WINDOWS_SIZE[0] / 2), 260)
+        text_rect_control.center = (int(WINDOW_SIZE[0] / 2), 260)
         window.blit(text_output_control, text_rect_control)
 
 
 def game_intro():
     intro = True
     window.blit(background, (0, 0))
-    font = pygame.font.Font('freesansbold.ttf', 80)
-    text_output = font.render("Platformer", True, BLACK)
+    text_output = font_screen.render("Platformer", True, BLACK)
     text_rect = text_output.get_rect()
-    text_rect.center = (int(WINDOWS_SIZE[0] / 2), 220)
+    text_rect.center = (int(WINDOW_SIZE[0] / 2), 220)
     window.blit(text_output, text_rect)
 
     while intro:
@@ -580,9 +584,8 @@ def game_intro():
 
         mouse = pygame.mouse.get_pos()
         click = pygame.mouse.get_pressed()
-        button = IntroButton(mouse, click)
+        button = ButtonIntro(mouse, click)
         button.button_draw()
-        global button_info
         button_info = ButtonInfo(mouse, click, RECT_INFO, "Information")
         button_info.button_draw()
         button.button_text(RECT_GREEN, "GO")
@@ -595,13 +598,12 @@ def game_intro():
 def game_info():
     intro = True
     window.blit(background, (0, 0))
-    font = pygame.font.Font('freesansbold.ttf', 80)
-    text_output = font.render("Information", True, BLACK)
+    text_output = font_screen.render("Information", True, BLACK)
     text_rect = text_output.get_rect()
-    text_rect.center = (int(WINDOWS_SIZE[0] / 2), 100)
+    text_rect.center = (int(WINDOW_SIZE[0] / 2), 100)
     window.blit(text_output, text_rect)
 
-    button_info.info_text()
+    ButtonInfo.info_text()
 
     while intro:
         for event in pygame.event.get():
@@ -611,7 +613,7 @@ def game_info():
 
         mouse = pygame.mouse.get_pos()
         click = pygame.mouse.get_pressed()
-        button = IntroButton(mouse, click)
+        button = ButtonIntro(mouse, click)
         button.button_draw()
         button.button_text(RECT_GREEN, "GO")
         button.button_text(RECT_RED, "CHICK OUT")
@@ -626,8 +628,7 @@ def game_pause():
     global paused
     paused = True
 
-    font = pygame.font.Font('freesansbold.ttf', 80)
-    text_output = font.render("Paused", True, BLACK)
+    text_output = font_screen.render("Paused", True, BLACK)
     text_rect = text_output.get_rect()
     text_rect.center = (int(WINDOWS_SIZE[0] / 2), 220)
     window.blit(text_output, text_rect)
@@ -640,7 +641,7 @@ def game_pause():
 
         mouse = pygame.mouse.get_pos()
         click = pygame.mouse.get_pressed()
-        button = PausedButton(mouse, click)
+        button = ButtonPause(mouse, click)
         button.button_draw()
         button.button_text(RECT_GREEN, "Continue")
         button.button_text(RECT_RED, "CHICK OUT")
@@ -651,11 +652,10 @@ def game_pause():
 
 
 def draw():
-    global player
     window.blit(background, (0, 0))
     player.move()
     for i in enemy:
-        i.move(i)
+        i.move()
     player.score()
     Projectiles.create_bullets()
     for i in bullets:
@@ -669,7 +669,7 @@ def draw():
         i.draw()
     player.draw()
     for i in enemy:
-        i.draw(i)
+        i.draw()
         player.check()
     pygame.display.update()
 
@@ -685,8 +685,6 @@ def game_loop():
     else:
         player = Player(player_x, PLAYER_START_Y - PLAYER_HEIGHT, PLAYER_WIDTH, PLAYER_HEIGHT, PLAYER_VEL)
 
-    global enemy
-    enemy = list()
     enemy_x = random.randint(100, 700)
     while abs(player_x - enemy_x) < 350:
         if player_x > 350:

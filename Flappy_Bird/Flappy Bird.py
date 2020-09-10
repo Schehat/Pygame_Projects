@@ -211,6 +211,9 @@ def main():
                 pipe.passed = True
                 add_pipe = True
 
+            if pipe.x + pipe.PIPE_TOP.get_width() < 0:
+                rem.append(pipe)
+
             pipe.move()
 
         if add_pipe:
